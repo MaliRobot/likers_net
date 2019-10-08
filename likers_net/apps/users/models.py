@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from ..companies.models import Company
-from ..posts.models import Post
+from apps.companies.models import Company
+from apps.posts.models import Post
 
 # Create your models here.
 class User(AbstractUser):
