@@ -9,17 +9,20 @@ class UserSerializer(serializers.Serializer):
     password = serializers.CharField()
     email = serializers.CharField()
 
-    def validate(self, data):
+    def validate_email(self, email):
         """
         Check that start is before finish.
         """
         response = requests.get(
-            'https://api.hunter.io/v2/email-verifier?email={}&api_key={}'.format(data['email'], settings.HUNTER_KEY))
-        d = response.json()
-        if d and 'errors' not in d:
-            if d['data']['result'] != 'undeliverable':
-                return data
+            'https://api.hunter.io/v2/email-verifier?email={}&api_key={}'.format(email, settings.HUNTER_KEY))
+        data = response.json()
+        if data and 'errors' not in data:
+            if data['data']['result'] != 'undeliverable':
+                return email
         raise serializers.ValidationError("Email does not exist")
 
     def create(self, validated_data):
-        return User.objects.create(**validated_data)
+        password = validated_data.pop('password')
+        user = User.objects.create(**validated_data)
+        user.set_password(password)
+        return user
