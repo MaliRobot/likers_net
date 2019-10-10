@@ -22,7 +22,10 @@ class UserSerializer(serializers.Serializer):
         raise serializers.ValidationError("Email does not exist")
 
     def create(self, validated_data):
-        password = validated_data.pop('password')
-        user = User.objects.create(**validated_data)
-        user.set_password(password)
+        if settings.DEBUG == 1:
+            password = validated_data.pop('password')
+            user = User.objects.create(**validated_data)
+            user.set_password(password)
+        else:
+            user = User.objects.create(**validated_data)
         return user

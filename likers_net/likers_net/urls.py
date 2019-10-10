@@ -22,6 +22,7 @@ from rest_framework_simplejwt import views as jwt_views
 
 urlpatterns = [
     path('', include('apps.users.urls')),
+    path('', include('apps.posts.urls')),
     path('admin/', admin.site.urls),
     path('api/token/', jwt_views.TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
@@ -31,8 +32,4 @@ if settings.DEBUG:
     import debug_toolbar
     urlpatterns = [
         path('__debug__/', include(debug_toolbar.urls)),
-
-        # For django versions before 2.0:
-        # url(r'^__debug__/', include(debug_toolbar.urls)),
-
     ] + urlpatterns
