@@ -12,7 +12,7 @@ class UserSerializer(serializers.Serializer):
 
     def validate_email(self, email):
         """
-        Check that start is before finish.
+        Check if email is valid using hunter.io API service
         """
         if settings.DEBUG == 0:
             response = requests.get(
@@ -25,6 +25,11 @@ class UserSerializer(serializers.Serializer):
         return email
 
     def create(self, validated_data):
+        """
+        Register user
+        :param validated_data:
+        :return:
+        """
         try:
             password = validated_data.pop('password')
             user = User.objects.create(**validated_data)
