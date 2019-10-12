@@ -1,19 +1,15 @@
 from django.shortcuts import render
 from django.http import HttpResponse, Http404
-from django.shortcuts import get_list_or_404, get_object_or_404
-from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import UserSerializer
+from .serializers import UserSerializer, LikeSerializer
 from .models import User, Like
 from apps.posts.models import Post
-from rest_framework import generics
-from rest_framework import filters
+from rest_framework import generics, filters
 from rest_framework.permissions import IsAuthenticated
-from .serializers import LikeSerializer
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters
+
 
 class UserList(APIView):
     def post(self, request):
@@ -30,7 +26,7 @@ class UserList(APIView):
 
 
 class UserDetail(APIView):
-    # permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,)
     def get_object(self, pk):
         """
         :param pk:
@@ -59,6 +55,10 @@ class LikeList(generics.ListCreateAPIView):
 
 
     def get_queryset(self):
+        """
+        Get posts by user id
+        :return:
+        """
         queryset = Like.objects.all()
         user = self.request.query_params.get('user')
 
@@ -74,7 +74,7 @@ class LikeDetail(generics.ListCreateAPIView):
 
     def post(self, request, pk):
         """
-        Like post by given pk
+        Like post by given post pk
         :param request:
         :param pk:
         :return:
@@ -93,6 +93,13 @@ class LikeDetail(generics.ListCreateAPIView):
             return Response({'error': str(e)})
 
     def delete(self, request, pk, format=None):
+        """
+        Unlike post by given post pk
+        :param request:
+        :param pk:
+        :param format:
+        :return:
+        """
         user = request.user
         if user.is_authenticated:
             post = get_object_or_404(Post, id=pk)
@@ -102,47 +109,6 @@ class LikeDetail(generics.ListCreateAPIView):
             like.delete()
             return Response(status=status.HTTP_200_OK)
         return Response({'error': 'user must be logged in'})
-
-
-
-# class HandleLikes(APIView):
-#     # permission_classes = (IsAuthenticated,)
-#     def get(self, request, pk=None):
-#         """
-#         Get likes by user or likes by all users, depending on presence of pk
-#         :param request:
-#         :param pk:
-#         :return:
-#         """
-#         if pk is not None:
-#             likes = [(like.post_id, like.user_id) for like in Like.objects.filter(user_id=pk)]
-#             return Response(likes)
-#         likes = [(like.post_id, like.user_id) for like in Like.objects.all()]
-#         return Response(likes)
-#
-
-#
-#     def delete(self, request, pk):
-#         """
-#         Unlike post given by pk
-#         :param request:
-#         :param pk:
-#         :return:
-#         """
-#         user = request.user
-#         if user.is_authenticated:
-#             post = get_object_or_404(Post, id=pk)
-#             if post.author_id == user.id:
-#                 return Response({'error': 'user can\'t unlike own post'})
-#             like = get_object_or_404(Like, post=pk, user=user)
-#             like.delete()
-#             return Response(status=status.HTTP_200_OK)
-#         return Response({'error': 'user must be logged in'})
-#
-#     def get_queryset(self):
-#         print('okijij')
-#         user = self.request.query_params.get('user')
-#         return self.model.objects.filter(like__user=user)
 
 
 def index(request):

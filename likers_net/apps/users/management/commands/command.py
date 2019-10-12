@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
-from .models import User
-from .models import Like
+from likers_net.apps.users.models import User
+from likers_net.apps.users.models import Like
 import requests
 import config
 import json
