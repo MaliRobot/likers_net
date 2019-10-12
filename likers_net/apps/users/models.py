@@ -51,16 +51,6 @@ def create_user_company(sender, instance, created, **kwargs):
             )
 
 
-# @receiver(post_save, sender=User)
-# def save_user_company(sender, instance, **kwargs):
-#     """
-#     :param sender:
-#     :param instance:
-#     :param kwargs:
-#     :return:
-#     """
-#     instance.company.save()
-
 
 class Like(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

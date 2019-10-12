@@ -8,6 +8,7 @@ from rest_framework import status
 from .serializers import UserSerializer
 from .models import User, Like
 from apps.posts.models import Post
+from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 
 
@@ -50,7 +51,7 @@ class UserDetail(APIView):
 
 
 class HandleLikes(APIView):
-    permission_classes = (IsAuthenticated,)
+    # permission_classes = (IsAuthenticated,)
     def get(self, request, pk=None):
         """
         Get likes by user or likes by all users, depending on presence of pk
@@ -100,6 +101,11 @@ class HandleLikes(APIView):
             like.delete()
             return Response(status=status.HTTP_200_OK)
         return Response({'error': 'user must be logged in'})
+
+    def get_queryset(self):
+        print('okijij')
+        user = self.request.query_params.get('user')
+        return self.model.objects.filter(like__user=user)
 
 
 def index(request):
