@@ -53,7 +53,8 @@ class Command(BaseCommand):
         users_order = [x[1] for x in reversed(sorted(temp_list, key=lambda x: x[1]))]
         token = self.authenticate('user_0', 'easypass0')
         print(self.get_posts(token))
-
+        # get posts by user: localhost:8000/api/posts?author=1
+        # get likes of post: localhost:8000/api/likes?post=1
 
     def authenticate(self, user, password):
         """
@@ -193,16 +194,3 @@ class Command(BaseCommand):
     #         user = json.loads(r.content.decode('utf-8'))
     #         userLike(user)
     #
-    # def main(argv):
-    #     """
-    #     :param argv:
-    #     :return:
-    #     """
-    #     token = authenticate(argv[0], argv[1])
-    #     make_users(config.NUMBER_OF_USERS, token)
-    #     users = get_users(token)
-    #     make_posts(users)
-    #     token = authenticate('admin', 'celikpromet')
-    #     posts = get_posts(token)
-    #     likePosts(posts, token)
-    #     print("Done")

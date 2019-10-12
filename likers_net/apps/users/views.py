@@ -53,17 +53,19 @@ class LikeList(generics.ListCreateAPIView):
     model = Like
     serializer_class = LikeSerializer
 
-
     def get_queryset(self):
         """
-        Get posts by user id
+        Get posts by user id and/or post id
         :return:
         """
         queryset = Like.objects.all()
         user = self.request.query_params.get('user')
+        post = self.request.query_params.get('post')
 
         if user:
             queryset = queryset.filter(user_id=user)
+        if post:
+            queryset = queryset.filter(post_id=post)
 
         return queryset
 
