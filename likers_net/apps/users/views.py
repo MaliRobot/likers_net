@@ -12,6 +12,13 @@ from rest_framework.permissions import IsAuthenticated
 
 
 class UserList(APIView):
+    def get(self, request, format=None):
+        """
+        Return a list of all users.
+        """
+        users = [[user.id, user.username] for user in User.objects.all()]
+        return Response(users)
+
     def post(self, request):
         """
         Register User

@@ -143,6 +143,35 @@ class Command(BaseCommand):
         r = requests.get('http://' + self.BASE_URL + '/api/posts/', headers={'Authorization': 'Bearer ' + token})
         return json.loads(r.content.decode('utf-8'))
 
+    def get_posts_by_user(self, token, user_id):
+        """
+        Get list of all posts by user
+        :param token:
+        :return:
+        """
+        r = requests.get('http://' + self.BASE_URL + f'/api/posts/author={user_id}', headers={'Authorization': 'Bearer ' + token})
+        return json.loads(r.content.decode('utf-8'))
+
+    def get_likes_by_post(self, token, post_id):
+        """
+        Get list of all likes by post id
+        :param token:
+        :return:
+        """
+        r = requests.get('http://' + self.BASE_URL + f'/api/posts/post={post_id}', headers={'Authorization': 'Bearer ' + token})
+        return json.loads(r.content.decode('utf-8'))
+
+    def user_has_post_zero_likes(self, token, user_id):
+        post = self.get_posts_by_user(token, user_id)
+        for p in post:
+            likes = self.get_likes_by_post(token, p['id'])
+            if len(likes) == 0:
+                return True
+        return False
+
+    def check_finished(self, token, users):
+
+
     # def userLike(user):
     #     """
     #     Like post as a user
