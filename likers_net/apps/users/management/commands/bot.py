@@ -1,65 +1,67 @@
 from django.core.management.base import BaseCommand, CommandError
-from likers_net.apps.users.models import User
-from likers_net.apps.users.models import Like
-import requests
-import config
-import json
-import random
-import sys
+from apps.users.models import User
+from apps.users.models import Like
+import requests, json, sys, os, random
+# import config
 from urllib import request, parse
 from collections import Counter
+from decouple import config
 
 
 class Command(BaseCommand):
-    help = 'Closes the specified poll for voting'
+    help = 'Create User, Posts and Likes all the while testing our humble app'
+    BASE_URL = 'localhost:8000'
 
     def add_arguments(self, parser):
-        parser.add_argument('poll_ids', nargs='+', type=int)
-
-    def handle(self, *args, **options):
         pass
 
-    # BASE_URL = 'http://127.0.0.1:8000/'
-    #
-    # def authenticate(user, password):
-    #     """
-    #     Login as user
-    #     :param user:
-    #     :param password:
-    #     :return:
-    #     """
-    #     data = {
-    #         'username': user,
-    #         'password': password
-    #     }
-    #
-    #     req = request.Request(BASE_URL + 'api-token-auth/')
-    #
-    #     with request.urlopen(req, data=parse.urlencode(data).encode('utf-8')) as f:
-    #         resp = f.read()
-    #         resp_dict = json.loads(resp)
-    #
-    #     return "JWT " + resp_dict['token']
-    #
-    # def make_users(num_users, token):
-    #     """
-    #     Create users
-    #     :param num_users:
-    #     :param token:
-    #     :return:
-    #     """
-    #     for i in range(num_users):
-    #         num = str(i)
-    #         data = {
-    #             "username": "user_" + num,
-    #             "email": "misha+" + num + "@interglider.com",
-    #             "password": "easypass" + num,
-    #             "groups": []
-    #         }
-    #
-    #         r = requests.post(BASE_URL + 'users/', data=data, headers={'Authorization': token})
-    #         print("Creating user: ", r.status_code)
-    #
+    def handle(self, *args, **options):
+        NUMBER_OF_USERS = int(os.getenv('NUMBER_OF_USERS', config('NUMBER_OF_USERS')))
+        MAX_POSTS_PER_USER = int(os.getenv('MAX_POSTS_PER_USER', config('MAX_POSTS_PER_USER')))
+        MAX_LIKES_PER_USER = int(os.getenv('MAX_LIKES_PER_USER', config('MAX_LIKES_PER_USER')))
+        BASE_URL = os.getenv('BASE_URL', config('BASE_URL'))
+
+        print(NUMBER_OF_USERS)
+        self.make_users(NUMBER_OF_USERS)
+
+    def authenticate(user, password, BASE_URL):
+        """
+        Login as user
+        :param user:
+        :param password:
+        :return:
+        """
+        data = {
+            'username': user,
+            'password': password
+        }
+
+        req = request.Request(BASE_URL + 'api-token-auth/')
+
+        with request.urlopen(req, data=parse.urlencode(data).encode('utf-8')) as f:
+            resp = f.read()
+            resp_dict = json.loads(resp)
+
+        return "JWT " + resp_dict['token']
+
+    def make_users(self, NUMBER_OF_USERS):
+        """
+        Create users
+        :param num_users:
+        :param token:
+        :return:
+        """
+        for i in range(NUMBER_OF_USERS):
+            num = str(i)
+            data = {
+                "username": "user_" + num,
+                "email": "misha+" + num + "@interglider.com",
+                "password": "easypass" + num
+            }
+            print(self.BASE_URL)
+            r = requests.post('http://' + self.BASE_URL + '/api/users/', data=data)
+            print(f"Creating user: {num} ", r.status_code)
+
     # def get_users(token):
     #     """
     #     Get list of all users
