@@ -49,8 +49,8 @@ class Command(BaseCommand):
         # order users by the number of posts
         temp_list = []
         for k, v in self.users.items():
-            temp_list.append([k, self.users[k]['posts_num']])
-        users_order = [x[1] for x in reversed(sorted(temp_list, key=lambda x: x[1]))]
+            temp_list.append([k, self.users[k]['password'], self.users[k]['posts_num']])
+        users_order = [[x[0], x[1]] for x in reversed(sorted(temp_list, key=lambda x: x[2]))]
         token = self.authenticate('user_0', 'easypass0')
         print(self.get_posts(token))
         # get posts by user: localhost:8000/api/posts?author=1
