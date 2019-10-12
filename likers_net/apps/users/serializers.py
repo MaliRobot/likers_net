@@ -1,7 +1,7 @@
 from rest_framework import serializers
 import requests
 from django.conf import settings
-from .models import User
+from .models import User, Like
 from django.contrib.auth.hashers import make_password
 
 
@@ -38,3 +38,9 @@ class UserSerializer(serializers.Serializer):
         except Exception as e:
             raise serializers.ValidationError({'error': str(e)})
         return user
+
+
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = '__all__'
