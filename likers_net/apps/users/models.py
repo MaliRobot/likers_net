@@ -44,11 +44,6 @@ def create_user_company(sender, instance, created, **kwargs):
                 company_name=company_name,
                 company_domain=company_domain,
             )
-    else:
-        if created:
-            Company.objects.create(
-                user=instance
-            )
 
 
 

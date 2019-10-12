@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 
 
 class PostViewSet(viewsets.ModelViewSet):
-    # permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,)
     serializer_class = PostSerializer
     queryset = Post.objects.all().order_by('title')
     filterset_fields = ['author']
