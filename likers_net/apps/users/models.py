@@ -2,6 +2,10 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from apps.companies.models import Company
 from apps.posts.models import Post
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+import clearbit
+from django.conf import settings
 
 
 # Create your models here.
@@ -16,6 +20,46 @@ class User(AbstractUser):
         on_delete=models.CASCADE,
         related_name='users'
     )
+
+
+@receiver(post_save, sender=User)
+def create_user_company(sender, instance, created, **kwargs):
+    """
+    Create company from given user's email
+    :param sender:
+    :param instance:
+    :param created:
+    :param kwargs:
+    :return:
+    """
+    clearbit.key = settings.CLEARBIT_KEY
+    response = clearbit.Enrichment.find(email=instance.email, stream=True)
+    if response['company'] is not None:
+        company_id = response['company']['id']
+        company_name = response['company']['name']
+        company_domain = response['company']['domain']
+        if created:
+            Company.objects.create(
+                company_id=company_id,
+                company_name=company_name,
+                company_domain=company_domain,
+            )
+    else:
+        if created:
+            Company.objects.create(
+                user=instance
+            )
+
+
+# @receiver(post_save, sender=User)
+# def save_user_company(sender, instance, **kwargs):
+#     """
+#     :param sender:
+#     :param instance:
+#     :param kwargs:
+#     :return:
+#     """
+#     instance.company.save()
 
 
 class Like(models.Model):

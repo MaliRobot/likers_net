@@ -141,3 +141,6 @@ REST_FRAMEWORK = {
 
 # hunter.io API key
 HUNTER_KEY = os.getenv('HUNTER_KEY', config('HUNTER_KEY'))
+
+# Clearbit key:
+CLEARBIT_KEY = os.getenv('CLEARBIT_KEY', config('CLEARBIT_KEY'))
