@@ -10,7 +10,24 @@ import django.core.management.commands.runserver as runserver
 
 
 class Command(BaseCommand):
-    help = 'Create User, Posts and Likes all the while testing our humble app'
+    help = '''Create User, Posts and Likes all the while testing our humble app
+    
+    This bot should read rules from a config file (in any format you choose), but should have following fields
+    (all integers, you can rename as you see fit):
+    ● number_of_users
+    ● max_posts_per_user
+    ● max_likes_per_user
+    Bot should read the configuration and create this activity:
+    ● signup users (number provided in config)
+    ● each user creates random number of posts with any content (up to max_posts_per_user)
+    After creating the signup and posting activity, posts should be liked using following rules:
+    ● next user to perform a like is the user who has most posts and has not reached max likes
+    ● user performs “like” activity until he reaches max likes
+    ● user can only like random posts from users who have at least one post with 0 likes
+    ● if there is no posts with 0 likes, bot stops
+    ● users cannot like their own posts
+    ● posts can be liked multiple times, but one user can like a certain post only once
+    '''
     BASE_URL = os.getenv('BASE_URL', config('BASE_URL'))
 
     def add_arguments(self, parser):
@@ -159,8 +176,7 @@ class Command(BaseCommand):
         :return:
         """
         r = requests.get('http://' + self.BASE_URL + f'/api/likes?post={post_id}', headers={'Authorization': 'Bearer ' + token})
-        likes = json.loads(r.content.decode('utf-8'))
-        return likes
+        return json.loads(r.content.decode('utf-8'))
 
     def post_liked_by_user(self, token, post_id, user_id):
         """
