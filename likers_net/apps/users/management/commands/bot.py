@@ -51,10 +51,10 @@ class Command(BaseCommand):
         for k, v in self.users.items():
             temp_list.append([k, self.users[k]['password'], self.users[k]['posts_num']])
         users_order = [[x[0], x[1]] for x in reversed(sorted(temp_list, key=lambda x: x[2]))]
-        token = self.authenticate('user_0', 'easypass0')
-        print(self.get_posts(token))
-        # get posts by user: localhost:8000/api/posts?author=1
-        # get likes of post: localhost:8000/api/likes?post=1
+
+        done = False
+        while not done:
+            done = self.like_posts(users_order, MAX_LIKES_PER_USER)
 
     def authenticate(self, user, password):
         """
@@ -100,14 +100,14 @@ class Command(BaseCommand):
             users[username] = {'email': email, 'password': password, 'likes': 0, 'posts_num': 0}
         return users
 
-    # def get_users(token):
-    #     """
-    #     Get list of all users
-    #     :param token:
-    #     :return:
-    #     """
-    #     r = requests.get(BASE_URL + 'users/', headers={'Authorization': token})
-    #     return json.loads(r.content.decode('utf-8'))
+    def get_users(self, token):
+        """
+        Get list of all users
+        :param token:
+        :return:
+        """
+        r = requests.get('http://' + BASE_URL + '/api/users/', headers={'Authorization': token})
+        return json.loads(r.content.decode('utf-8'))
 
     def make_posts(self, username, token, MAX_POSTS_PER_USER):
         """
@@ -158,8 +158,16 @@ class Command(BaseCommand):
         :param token:
         :return:
         """
-        r = requests.get('http://' + self.BASE_URL + f'/api/posts/post={post_id}', headers={'Authorization': 'Bearer ' + token})
-        return json.loads(r.content.decode('utf-8'))
+        r = requests.get('http://' + self.BASE_URL + f'/api/likes/post={post_id}', headers={'Authorization': 'Bearer ' + token})
+        likes = json.loads(r.content.decode('utf-8'))
+        return likes
+
+    def post_liked_by_user(self, token, post_id, user_id):
+        r = requests.get('http://' + self.BASE_URL + f'/api/likes/post={post_id}&user={user_id}', headers={'Authorization': 'Bearer ' + token})
+        likes = json.loads(r.content.decode('utf-8'))
+        if len(likes) != []:
+            return True
+        return False
 
     def user_has_post_zero_likes(self, token, user_id):
         post = self.get_posts_by_user(token, user_id)
@@ -169,57 +177,37 @@ class Command(BaseCommand):
                 return True
         return False
 
-    def check_finished(self, token, users):
+    def is_finished(self, token):
+        posts = self.get_posts(token)
+        for post in posts:
+            likes = self.get_likes_by_post(token, post['id'])
+            if len(likes) == 0:
+                return True
+        return False
+
+    def do_like(self, token, post_id):
+        r = requests.post('http://' + self.BASE_URL + f'/api/likes/post={post_id}', headers={'Authorization': 'Bearer ' + token})
+        try:
+            if 'error' in json.loads(r.content.decode('utf-8')):
+                return False
+        except Exception as e:
+            return True
 
 
-    # def userLike(user):
-    #     """
-    #     Like post as a user
-    #     :param user:
-    #     :return:
-    #     """
-    #     liked = 0
-    #     username = user['username']
-    #     token = authenticate(username, 'easypass' + username[-1])
-    #     posts = get_posts(token)
-    #
-    #     while liked < config.MAX_LIKES_PER_USER:
-    #         r = requests.get(BASE_URL + 'likes/', headers={'Authorization': token})
-    #         likes = json.loads(r.content.decode('utf-8'))
-    #
-    #         single_post = random.choice(posts)
-    #         post_id = str(single_post['id'])
-    #         author = single_post['author']
-    #
-    #         # prevent liking of own post and admins post
-    #         if author != user['id'] and author != 1:
-    #             for l in likes:
-    #                 # case when user has already liked the post
-    #                 if l[0] == single_post['id'] and l[1] == user['id']:
-    #                     continue
-    #
-    #                 # checking if user has at least one post without like
-    #                 user_posts = [x['id'] for x in posts if x['author'] == author]
-    #                 user_posts_count = len(user_posts)
-    #                 liked_posts_of_user = len(set([x[0] for x in likes if x[0] in user_posts]))
-    #                 if user_posts_count == liked_posts_of_user:
-    #                     continue
-    #
-    #             r = requests.post(BASE_URL + 'likes/' + post_id + '/', headers={'Authorization': token})
-    #             print("Liking post " + post_id + " as user" + str(user['id']) + ": ", r.status_code)
-    #             liked += 1
-    #
-    # def likePosts(posts, token):
-    #     """
-    #     Iterate over list of users and call user like function
-    #     :param posts:
-    #     :param token:
-    #     :return:
-    #     """
-    #     posts_by_author_list = [k['author'] for k in posts if k.get('author') and k.get('author') != 1]
-    #     posts_by_author_count = Counter(posts_by_author_list)
-    #     for post_count in posts_by_author_count.most_common():
-    #         r = requests.get(BASE_URL + 'users/' + str(post_count[0]) + '/', headers={'Authorization': token})
-    #         user = json.loads(r.content.decode('utf-8'))
-    #         userLike(user)
-    #
+    def like_posts(self, users, MAX_LIKES_PER_USER):
+        for u in users:
+            token = self.authenticate(u[0], u[1])
+            likes = 0
+            while likes < MAX_LIKES_PER_USER or self.is_finished(token) is False:
+                users = self.get_users(token)
+                for user in users:
+                    if self.user_has_post_zero_likes(token, user[0]):
+                        user_posts = self.get_posts_by_user(token, user[0])
+                        liked = False
+                        while liked == False:
+                            post = random.choice(user_posts)
+                            if self.post_liked_by_user(token, post['id'], user[0]):
+                                if self.do_like(token, post['id']):
+                                    likes += 1
+
+        return self.is_finished(token)
