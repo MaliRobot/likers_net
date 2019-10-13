@@ -32,18 +32,19 @@ def create_user_company(sender, instance, created, **kwargs):
     :param kwargs:
     :return:
     """
-    clearbit.key = settings.CLEARBIT_KEY
-    response = clearbit.Enrichment.find(email=instance.email, stream=True)
-    if response['company'] is not None:
-        company_id = response['company']['id']
-        company_name = response['company']['name']
-        company_domain = response['company']['domain']
-        if created:
-            Company.objects.create(
-                company_id=company_id,
-                company_name=company_name,
-                company_domain=company_domain,
-            )
+    if settings.DEBUG == 0:
+        clearbit.key = settings.CLEARBIT_KEY
+        response = clearbit.Enrichment.find(email=instance.email, stream=True)
+        if response['company'] is not None:
+            company_id = response['company']['id']
+            company_name = response['company']['name']
+            company_domain = response['company']['domain']
+            if created:
+                Company.objects.create(
+                    company_id=company_id,
+                    company_name=company_name,
+                    company_domain=company_domain,
+                )
 
 
 
