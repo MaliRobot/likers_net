@@ -16,8 +16,9 @@ class UserList(APIView):
         """
         Return a list of all users.
         """
-        users = [[user.id, user.username] for user in User.objects.all()]
-        return Response(users)
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
 
     def post(self, request):
         """
@@ -80,8 +81,8 @@ class LikeList(generics.ListCreateAPIView):
 
 class LikeDetail(generics.ListCreateAPIView):
     model = Like
-    permission_classes = (IsAuthenticated,)
     serializer_class = LikeSerializer
+    permission_classes = (IsAuthenticated,)
 
     def post(self, request, pk):
         """
@@ -91,15 +92,15 @@ class LikeDetail(generics.ListCreateAPIView):
         :return:
         """
         try:
-            user = request.user
-            post = get_object_or_404(Post, id=pk)
-            if post.author_id == user.id:
-                return Response({'error': 'user can\'t like own post'}, status=status.HTTP_403_FORBIDDEN)
-            like = Like(user=user, post=post)
+            post = Post.objects.get(pk=pk)
+        except Post.DoesNotExist:
+            return Response({'error', f'post {pk} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        like = Like(user_id=request.user.id, post_id=post.id)
+        try:
             like.save()
-            return Response(status=status.HTTP_201_CREATED)
+            return Response({'success': f'user has liked post {pk}'}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            return Response({'error': str(e)})
+            return Response({'error':  str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk, format=None):
         """
@@ -109,13 +110,14 @@ class LikeDetail(generics.ListCreateAPIView):
         :param format:
         :return:
         """
-        user = request.user
-        post = get_object_or_404(Post, id=pk)
-        if post.author_id == user.id:
-            return Response({'error': 'user can\'t unlike own post'}, status=status.HTTP_403_FORBIDDEN)
-        like = get_object_or_404(Like, post=pk, user=user)
+        try:
+            like = Like.objects.get(post_id=pk, user_id=request.user.id)
+        except Like.DoesNotExist:
+            return Response({'error', f'post {pk} has not been liked by current user'}, status=status.HTTP_400_BAD_REQUEST)
         like.delete()
         return Response(status=status.HTTP_200_OK)
+
+
 
 
 def index(request):

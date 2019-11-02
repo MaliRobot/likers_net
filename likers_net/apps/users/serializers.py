@@ -3,6 +3,7 @@ import requests
 from django.conf import settings
 from .models import User, Like
 from django.contrib.auth.hashers import make_password
+from django.db import IntegrityError
 
 
 class UserSerializer(serializers.Serializer):
@@ -35,7 +36,7 @@ class UserSerializer(serializers.Serializer):
             user = User.objects.create(**validated_data)
             user.set_password(password)
             user.save()
-        except Exception as e:
+        except IntegrityError as e:
             raise serializers.ValidationError({'error': str(e)})
         return user
 
@@ -44,3 +45,5 @@ class LikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Like
         fields = '__all__'
+
+
