@@ -58,6 +58,7 @@ class UserDetail(APIView):
 
 class LikeList(generics.ListCreateAPIView):
     model = Like
+    permission_classes = (IsAuthenticated,)
     serializer_class = LikeSerializer
 
     def get_queryset(self):
@@ -79,6 +80,7 @@ class LikeList(generics.ListCreateAPIView):
 
 class LikeDetail(generics.ListCreateAPIView):
     model = Like
+    permission_classes = (IsAuthenticated,)
     serializer_class = LikeSerializer
 
     def post(self, request, pk):
@@ -90,14 +92,12 @@ class LikeDetail(generics.ListCreateAPIView):
         """
         try:
             user = request.user
-            if user.is_authenticated:
-                post = get_object_or_404(Post, id=pk)
-                if post.author_id == user.id:
-                    return Response({'error': 'user can\'t like own post'})
-                like = Like(user=user, post=post)
-                like.save()
-                return Response(status=status.HTTP_201_CREATED)
-            return Response({'error': 'user must be logged in'})
+            post = get_object_or_404(Post, id=pk)
+            if post.author_id == user.id:
+                return Response({'error': 'user can\'t like own post'}, status=status.HTTP_403_FORBIDDEN)
+            like = Like(user=user, post=post)
+            like.save()
+            return Response(status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)})
 
@@ -110,14 +110,12 @@ class LikeDetail(generics.ListCreateAPIView):
         :return:
         """
         user = request.user
-        if user.is_authenticated:
-            post = get_object_or_404(Post, id=pk)
-            if post.author_id == user.id:
-                return Response({'error': 'user can\'t unlike own post'})
-            like = get_object_or_404(Like, post=pk, user=user)
-            like.delete()
-            return Response(status=status.HTTP_200_OK)
-        return Response({'error': 'user must be logged in'})
+        post = get_object_or_404(Post, id=pk)
+        if post.author_id == user.id:
+            return Response({'error': 'user can\'t unlike own post'}, status=status.HTTP_403_FORBIDDEN)
+        like = get_object_or_404(Like, post=pk, user=user)
+        like.delete()
+        return Response(status=status.HTTP_200_OK)
 
 
 def index(request):
