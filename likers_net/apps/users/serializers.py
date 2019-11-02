@@ -3,7 +3,6 @@ import requests
 from django.conf import settings
 from .models import User, Like
 from django.contrib.auth.hashers import make_password
-from django.db import IntegrityError
 
 
 class UserSerializer(serializers.Serializer):
@@ -31,13 +30,9 @@ class UserSerializer(serializers.Serializer):
         :param validated_data:
         :return:
         """
-        try:
-            password = validated_data.pop('password')
-            user = User.objects.create(**validated_data)
-            user.set_password(password)
-            user.save()
-        except IntegrityError as e:
-            raise serializers.ValidationError({'error': str(e)})
+        password = validated_data.pop('password')
+        user = User.objects.create(**validated_data)
+        user.set_password(password)
         return user
 
 

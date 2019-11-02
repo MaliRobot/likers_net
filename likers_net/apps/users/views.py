@@ -9,6 +9,7 @@ from .models import User, Like
 from apps.posts.models import Post
 from rest_framework import generics, filters
 from rest_framework.permissions import IsAuthenticated
+from django.db import IntegrityError
 
 
 class UserList(APIView):
@@ -28,8 +29,11 @@ class UserList(APIView):
         """
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            try:
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            except IntegrityError as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
