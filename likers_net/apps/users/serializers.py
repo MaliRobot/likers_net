@@ -1,10 +1,9 @@
 from rest_framework import serializers
-import requests
+import requests, os
 from django.conf import settings
 from .models import User, Like
 from django.contrib.auth.hashers import make_password
 from requests import Timeout
-import os
 from decouple import config
 
 
@@ -13,24 +12,20 @@ class UserSerializer(serializers.Serializer):
     password = serializers.CharField()
     email = serializers.CharField()
 
-    def validate_email(self, email):
+    def check_hunter_email(self, email):
         """
         Check if email is valid using hunter.io API service
         """
-        if settings.DEBUG == 0:
-            try:
-                response = requests.get(
-                    os.getenv('HUNTER_URL', config('HUNTER_URL')) + '?email={}&api_key={}'.format(email, settings.HUNTER_KEY),
-                    timeout=10
-                )
-            except Timeout as e:
-                raise serializers.ValidationError("Could not verify email, try again later")
-            data = response.json()
-            if data and 'errors' not in data:
-                if data['data']['result'] != 'undeliverable':
-                    return email
-            raise serializers.ValidationError("Email does not exist")
-        return email
+        response = requests.get(
+            os.getenv('HUNTER_URL', config('HUNTER_URL')) + '?email={}&api_key={}'.format(email, settings.HUNTER_KEY),
+            timeout=10
+        )
+        data = response.json()
+        if data and 'errors' not in data:
+            if data['data']['result'] != 'undeliverable':
+                return email
+        raise serializers.ValidationError("Email does not exist")
+
 
     def create(self, validated_data):
         """
@@ -39,6 +34,7 @@ class UserSerializer(serializers.Serializer):
         :return:
         """
         password = validated_data.pop('password')
+        self.check_hunter_email(validated_data['email'])
         user = User.objects.create(**validated_data)
         user.set_password(password)
         return user
