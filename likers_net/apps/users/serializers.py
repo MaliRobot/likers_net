@@ -3,6 +3,9 @@ import requests
 from django.conf import settings
 from .models import User, Like
 from django.contrib.auth.hashers import make_password
+from requests import Timeout
+import os
+from decouple import config
 
 
 class UserSerializer(serializers.Serializer):
@@ -15,8 +18,13 @@ class UserSerializer(serializers.Serializer):
         Check if email is valid using hunter.io API service
         """
         if settings.DEBUG == 0:
-            response = requests.get(
-                'https://api.hunter.io/v2/email-verifier?email={}&api_key={}'.format(email, settings.HUNTER_KEY))
+            try:
+                response = requests.get(
+                    os.getenv('HUNTER_URL', config('HUNTER_URL')) + '?email={}&api_key={}'.format(email, settings.HUNTER_KEY),
+                    timeout=10
+                )
+            except Timeout as e:
+                raise serializers.ValidationError("Could not verify email, try again later")
             data = response.json()
             if data and 'errors' not in data:
                 if data['data']['result'] != 'undeliverable':
